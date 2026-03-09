@@ -109,81 +109,13 @@ Common icons: home, search, menu, x, plus, minus, edit, trash-2, settings, user,
 - Body text: text-base text-gray-600 leading-relaxed
 - Small/caption: text-sm text-gray-500
 
-**Components (use these exact patterns):**
-
-Navbar (fixed, glass-morphism):
-\`\`\`html
-<nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-    <a href="#" class="text-xl font-bold text-gray-900">Brand</a>
-    <div class="hidden md:flex items-center space-x-8">
-      <a href="#features" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-    </div>
-    <button class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:shadow-lg">Get Started</button>
-  </div>
-</nav>
-\`\`\`
-
-Hero Section (gradient background):
-\`\`\`html
-<section class="pt-32 pb-20 bg-gradient-to-br from-primary-50 via-white to-accent-50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-700 mb-6">New Release</span>
-    <h1 class="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight mb-6">Build Something<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">Amazing</span></h1>
-    <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-10">Description text here with real, contextual content.</p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <button class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-8 py-3.5 rounded-xl transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5">Primary CTA</button>
-      <button class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium px-8 py-3.5 rounded-xl transition-all duration-200">Secondary CTA</button>
-    </div>
-  </div>
-</section>
-\`\`\`
-
-Feature Cards (grid layout):
-\`\`\`html
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-  <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-    <div class="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-5 group-hover:bg-primary-200 transition-colors">
-      <i data-lucide="zap" class="w-6 h-6 text-primary-600"></i>
-    </div>
-    <h3 class="text-lg font-semibold text-gray-900 mb-2">Feature Title</h3>
-    <p class="text-gray-600 leading-relaxed">Real description of what this feature does.</p>
-  </div>
-</div>
-\`\`\`
-
-Buttons:
-\`\`\`html
-<!-- Primary -->
-<button class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-6 py-2.5 rounded-lg transition-all duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Button</button>
-<!-- With icon -->
-<button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-6 py-2.5 rounded-lg transition-all duration-200">
-  <span>Get Started</span>
-  <i data-lucide="arrow-right" class="w-4 h-4"></i>
-</button>
-\`\`\`
-
-Form Inputs:
-\`\`\`html
-<input type="text" placeholder="Enter your email" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all duration-200 text-gray-900 placeholder-gray-400">
-\`\`\`
-
-Footer:
-\`\`\`html
-<footer class="bg-gray-900 text-gray-400 py-16">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-      <div>
-        <h4 class="text-white font-semibold mb-4">Product</h4>
-        <ul class="space-y-2 text-sm"><li><a href="#" class="hover:text-white transition-colors">Features</a></li></ul>
-      </div>
-    </div>
-    <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-      <p class="text-sm">&copy; 2026 Brand. All rights reserved.</p>
-    </div>
-  </div>
-</footer>
-\`\`\`
+**Components (use these patterns):**
+- Navbar: fixed top-0, glass-morphism (bg-white/80 backdrop-blur-lg), h-16, border-b border-gray-100
+- Hero: pt-32 pb-20, gradient bg (from-primary-50 via-white to-accent-50), centered text, gradient text with bg-clip-text, dual CTA buttons
+- Feature Cards: grid 1/2/3 cols, rounded-2xl, border border-gray-100, shadow-sm, icon in colored rounded-xl container, hover:shadow-xl hover:-translate-y-1
+- Buttons: primary (bg-primary-600 hover:bg-primary-700 text-white rounded-lg), secondary (bg-white border border-gray-200), with-icon (inline-flex items-center gap-2), focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+- Form Inputs: rounded-xl border border-gray-200, focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+- Footer: bg-gray-900 text-gray-400 py-16, grid cols-2 md:cols-4, border-t border-gray-800
 
 **Animations & Micro-interactions:**
 - All interactive elements: transition-all duration-200 or duration-300
