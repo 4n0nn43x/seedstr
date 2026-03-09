@@ -6,10 +6,21 @@ import { getLLMClient } from "../llm/client.js";
 import { getConfig, configStore } from "../config/index.js";
 import { logger } from "../utils/logger.js";
 import { cleanupProject } from "../tools/projectBuilder.js";
+import { getProjectBuildingPrompt, isWebProjectRequest } from "../templates/index.js";
 import type { Job, AgentEvent, TokenUsage, FileAttachment, WebSocketJobEvent } from "../types/index.js";
 
 // Approximate costs per 1M tokens for common models (input/output)
 const MODEL_COSTS: Record<string, { input: number; output: number }> = {
+  // Free models (OpenRouter :free suffix)
+  "qwen/qwen3-coder:free": { input: 0, output: 0 },
+  "meta-llama/llama-3.3-70b-instruct:free": { input: 0, output: 0 },
+  "openai/gpt-oss-120b:free": { input: 0, output: 0 },
+  "nousresearch/hermes-3-llama-3.1-405b:free": { input: 0, output: 0 },
+  "mistralai/mistral-small-3.1-24b-instruct:free": { input: 0, output: 0 },
+  "google/gemma-3-27b-it:free": { input: 0, output: 0 },
+  "openrouter/free": { input: 0, output: 0 },
+  // Paid models
+  "anthropic/claude-sonnet-4-6": { input: 1.35, output: 15.24 },
   "anthropic/claude-sonnet-4": { input: 3.0, output: 15.0 },
   "anthropic/claude-opus-4": { input: 15.0, output: 75.0 },
   "anthropic/claude-3.5-sonnet": { input: 3.0, output: 15.0 },
@@ -20,6 +31,7 @@ const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   "meta-llama/llama-3.1-405b-instruct": { input: 3.0, output: 3.0 },
   "meta-llama/llama-3.1-70b-instruct": { input: 0.5, output: 0.5 },
   "google/gemini-pro-1.5": { input: 2.5, output: 7.5 },
+  "qwen/qwen3-coder": { input: 0.14, output: 0.39 },
   // Default fallback
   default: { input: 1.0, output: 3.0 },
 };
@@ -435,23 +447,46 @@ export class AgentRunner extends EventEmitter implements TypedEventEmitter {
         ? job.budgetPerAgent
         : job.budget;
 
+      // Build enhanced system prompt with template instructions for web projects
+      const isWebProject = isWebProjectRequest(job.prompt);
+      const templatePrompt = isWebProject ? getProjectBuildingPrompt() : '';
+
+      const systemPrompt = `You are an elite AI developer agent competing in the Seedstr Blind Hackathon ($10K prize pool). You MUST produce the HIGHEST QUALITY output possible. An independent AI judge evaluates your work on three criteria:
+
+1. **Functionality** (CRITICAL — threshold 5/10, below = disqualified): Code must actually WORK. Every button, link, form, and interactive element must be functional. No broken features.
+2. **Design** (differentiator): Visual quality, modern aesthetics, responsive layout, consistent color palette, typography, spacing, animations.
+3. **Speed** (tiebreaker): How fast you respond. Be thorough but efficient.
+
+## ABSOLUTE RULES:
+- NEVER use placeholder text ("Lorem ipsum", "placeholder", "sample text") — write REAL, contextual, meaningful content
+- NEVER leave TODO, FIXME, or incomplete sections — every line of code must be production-ready
+- NEVER generate broken code — mentally verify all logic, matching tags, event handlers before creating files
+- ALWAYS create a COMPLETE, WORKING project — the AI judge will try to open and use it
+
+## How to Respond:
+- **Text requests** (tweets, emails, essays, answers, analysis): respond with well-written text directly. Do NOT create files.
+- **Project requests** (website, app, dashboard, tool, game, etc.): use create_file for EACH file, then call finalize_project to package into .zip
+- **When unsure**: if the prompt could reasonably result in a downloadable project, BUILD IT as files. The hackathon values deliverables.
+
+## Project Building Rules:
+When creating a project, ALWAYS build a complete multi-file structure:
+1. **index.html** — Complete page with ALL sections (navbar, hero, features, content, footer). Include ALL CDN dependencies in <head>.
+2. **styles.css** — Custom CSS animations, keyframes, transitions. Supplement Tailwind with custom styles for polish.
+3. **app.js** — ALL JavaScript: event listeners, state management, interactivity, Alpine.js data, dynamic content. Initialize Lucide icons with \`lucide.createIcons()\` at end.
+4. **README.md** — Project name, description, feature list, tech stack used, how to run (just open index.html in browser).
+
+## Code Quality:
+- Semantic HTML5: <header>, <nav>, <main>, <section>, <article>, <aside>, <footer>
+- Proper error handling in JS (try/catch, null checks, fallback values)
+- Accessible: proper alt texts, ARIA labels, keyboard navigation, focus states
+- Cross-browser: avoid bleeding-edge CSS, use standard approaches
+- Performance: lazy loading images, efficient event delegation, no memory leaks
+${templatePrompt}
+Job Budget: $${effectiveBudget.toFixed(2)} USD${job.jobType === "SWARM" ? ` (your share of $${job.budget.toFixed(2)} total across ${job.maxAgents} agents)` : ""}`;
+
       const result = await llm.generate({
         prompt: job.prompt,
-        systemPrompt: `You are an AI agent participating in the Seedstr marketplace. Your task is to provide the best possible response to job requests.
-
-Guidelines:
-- Be helpful, accurate, and thorough
-- Use tools when needed to get current information
-- Provide well-structured, clear responses
-- Be professional and concise
-- If you use web search, cite your sources
-
-Responding to jobs:
-- Most jobs are asking for TEXT responses — writing, answers, advice, ideas, analysis, tweets, emails, etc. For these, just respond directly with well-written text. Do NOT create files for text-based requests.
-- Only use create_file and finalize_project when the job is genuinely asking for a deliverable code project (a website, app, script, tool, etc.) that the requester would need to download and run/open.
-- Use your judgment to determine what the requester actually wants. "Write me a tweet" = text response. "Build me a landing page" = file project.
-
-Job Budget: $${effectiveBudget.toFixed(2)} USD${job.jobType === "SWARM" ? ` (your share of $${job.budget.toFixed(2)} total across ${job.maxAgents} agents)` : ""}`,
+        systemPrompt,
         tools: true,
       });
 
@@ -496,14 +531,27 @@ Job Budget: $${effectiveBudget.toFixed(2)} USD${job.jobType === "SWARM" ? ` (you
         });
 
         try {
-          // Upload the zip file
+          // Upload the zip file (with retry)
           this.emitEvent({
             type: "files_uploading",
             job,
             fileCount: 1,
           });
 
-          const uploadedFiles = await this.client.uploadFile(projectBuild.zipPath);
+          let uploadedFiles: FileAttachment;
+          let uploadAttempt = 0;
+          const maxUploadRetries = 3;
+          while (true) {
+            try {
+              uploadedFiles = await this.client.uploadFile(projectBuild.zipPath);
+              break;
+            } catch (uploadRetryError) {
+              uploadAttempt++;
+              if (uploadAttempt >= maxUploadRetries) throw uploadRetryError;
+              logger.warn(`Upload attempt ${uploadAttempt}/${maxUploadRetries} failed, retrying in ${uploadAttempt}s...`);
+              await new Promise(r => setTimeout(r, uploadAttempt * 1000));
+            }
+          }
 
           this.emitEvent({
             type: "files_uploaded",

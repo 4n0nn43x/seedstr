@@ -6,6 +6,7 @@ import { logger } from "../utils/logger.js";
 import { webSearch, type WebSearchResult } from "../tools/webSearch.js";
 import { calculator, type CalculatorResult } from "../tools/calculator.js";
 import { ProjectBuilder, type ProjectFile, type ProjectBuildResult } from "../tools/projectBuilder.js";
+import { getProjectBuildingPrompt, isWebProjectRequest } from "../templates/index.js";
 
 // Errors that are worth retrying (usually transient LLM output issues)
 const RETRYABLE_ERROR_PATTERNS = [
@@ -222,7 +223,7 @@ export class LLMClient {
 
       // Project builder tool - creates files that will be packaged into a zip
       tools.create_file = tool({
-        description: `Create a file for a deliverable code project (website, app, script, tool). Only use this when the job is asking for an actual downloadable project — NOT for text-based requests like writing tweets, emails, essays, or answers. Call multiple times for multi-file projects, then use finalize_project to package them.`,
+        description: `Create a file for a deliverable code project (website, app, script, tool). Only use this when the job is asking for an actual downloadable project — NOT for text-based requests like writing tweets, emails, essays, or answers. Call multiple times for multi-file projects, then use finalize_project to package them. ALWAYS create at minimum: index.html, styles.css, app.js, and README.md for web projects. Use Tailwind CSS via CDN and modern design patterns.`,
         parameters: z.object({
           path: z
             .string()
@@ -231,7 +232,7 @@ export class LLMClient {
             ),
           content: z
             .string()
-            .describe("The complete content of the file"),
+            .describe("The complete, production-quality content of the file. For HTML files, include Tailwind CSS CDN, Inter font, and responsive design. Write complete, functional code — never use placeholders or TODOs."),
         }),
         execute: async ({ path, content }) => {
           logger.tool("create_file", "start", `Creating: ${path}`);
@@ -406,7 +407,7 @@ export class LLMClient {
         maxTokens,
         temperature,
         tools: hasTools ? tools : undefined,
-        maxSteps: hasTools ? 10 : 1, // Allow up to 10 tool call steps
+        maxSteps: hasTools ? 20 : 1, // 20 steps = ~5-6 files + finalize + reasoning. Optimized for free tier rate limits (50 req/day)
         onStepFinish: (step) => {
           // Debug logging for each step
           logger.debug(`Step finished - finishReason: ${step.finishReason}, hasText: ${!!step.text}, toolCalls: ${step.toolCalls?.length || 0}`);
@@ -527,20 +528,21 @@ export class LLMClient {
   }
 
   /**
-   * Generate a response for a Seedstr job
+   * Generate a response for a Seedstr job (fallback method)
    */
   async generateJobResponse(job: { prompt: string; budget: number }): Promise<string> {
-    const systemPrompt = `You are an AI agent participating in the Seedstr marketplace. Your task is to provide the best possible response to job requests.
+    const templatePrompt = getProjectBuildingPrompt();
 
-Guidelines:
-- Be helpful, accurate, and thorough
-- Use tools when needed to get current information
-- Provide well-structured, clear responses
-- Be professional and concise
-- If you use web search, cite your sources
+    const systemPrompt = `You are an elite AI developer agent competing in a hackathon. Produce the HIGHEST QUALITY output possible.
 
-Job Budget: $${job.budget.toFixed(2)} USD
-This indicates how much the requester values this task. Adjust your effort accordingly.`;
+Rules:
+- Complete, production-ready, fully functional code — no placeholders, no TODOs
+- For project requests: use create_file + finalize_project to build a complete .zip
+- Always create: index.html, styles.css, app.js, README.md
+- Use Tailwind CSS, Lucide icons, Inter font, Alpine.js
+- Modern responsive design with hover animations and glass-morphism effects
+${templatePrompt}
+Job Budget: $${job.budget.toFixed(2)} USD`;
 
     const result = await this.generate({
       prompt: job.prompt,

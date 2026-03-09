@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import archiver from "archiver";
 import { createWriteStream } from "fs";
 import { logger } from "../utils/logger.js";
+import { validateFile } from "./codeValidator.js";
 
 export interface ProjectFile {
   path: string; // Relative path within the project (e.g., "src/index.html")
@@ -59,6 +60,12 @@ export class ProjectBuilder {
     
     writeFileSync(fullPath, content, "utf-8");
     logger.debug(`Added file: ${normalizedPath} (${content.length} bytes)`);
+
+    // Validate file content
+    const validation = validateFile(normalizedPath, content);
+    if (!validation.valid) {
+      logger.warn(`Validation issues in ${normalizedPath}: ${validation.errors.join(', ')}`);
+    }
   }
 
   /**

@@ -4,9 +4,17 @@ import prompts from "prompts";
 import { getConfig } from "../../config/index.js";
 import { getLLMClient } from "../../llm/client.js";
 import { cleanupProject } from "../../tools/projectBuilder.js";
+import { getProjectBuildingPrompt, isWebProjectRequest } from "../../templates/index.js";
 import type { Job, TokenUsage } from "../../types/index.js";
 
 const MODEL_COSTS: Record<string, { input: number; output: number }> = {
+  // Free models
+  "qwen/qwen3-coder:free": { input: 0, output: 0 },
+  "meta-llama/llama-3.3-70b-instruct:free": { input: 0, output: 0 },
+  "openai/gpt-oss-120b:free": { input: 0, output: 0 },
+  "openrouter/free": { input: 0, output: 0 },
+  // Paid models
+  "anthropic/claude-sonnet-4-6": { input: 1.35, output: 15.24 },
   "anthropic/claude-sonnet-4": { input: 3.0, output: 15.0 },
   "anthropic/claude-opus-4": { input: 15.0, output: 75.0 },
   "anthropic/claude-3.5-sonnet": { input: 3.0, output: 15.0 },
@@ -17,6 +25,7 @@ const MODEL_COSTS: Record<string, { input: number; output: number }> = {
   "meta-llama/llama-3.1-405b-instruct": { input: 3.0, output: 3.0 },
   "meta-llama/llama-3.1-70b-instruct": { input: 0.5, output: 0.5 },
   "google/gemini-pro-1.5": { input: 2.5, output: 7.5 },
+  "qwen/qwen3-coder": { input: 0.14, output: 0.39 },
   default: { input: 1.0, output: 3.0 },
 };
 
@@ -108,20 +117,24 @@ export async function simulateCommand(options: SimulateOptions): Promise<void> {
     ? fakeJob.budgetPerAgent
     : fakeJob.budget;
 
-    const systemPrompt = `You are an AI agent participating in the Seedstr marketplace. Your task is to provide the best possible response to job requests.
+    // Build enhanced system prompt (same as runner.ts for consistency)
+    const isWebProject = isWebProjectRequest(fakeJob.prompt);
+    const templatePrompt = isWebProject ? getProjectBuildingPrompt() : '';
 
-Guidelines:
-- Be helpful, accurate, and thorough
-- Use tools when needed to get current information
-- Provide well-structured, clear responses
-- Be professional and concise
-- If you use web search, cite your sources
+    const systemPrompt = `You are an elite AI developer agent competing in the Seedstr Blind Hackathon ($10K prize pool). You MUST produce the HIGHEST QUALITY output possible. An independent AI judge evaluates your work on:
 
-Responding to jobs:
-- Most jobs are asking for TEXT responses — writing, answers, advice, ideas, analysis, tweets, emails, etc. For these, just respond directly with well-written text. Do NOT create files for text-based requests.
-- Only use create_file and finalize_project when the job is genuinely asking for a deliverable code project (a website, app, script, tool, etc.) that the requester would need to download and run/open.
-- Use your judgment to determine what the requester actually wants. "Write me a tweet" = text response. "Build me a landing page" = file project.
+1. **Functionality** (CRITICAL — threshold 5/10): Code must WORK. Every interactive element must be functional.
+2. **Design** (differentiator): Modern aesthetics, responsive layout, animations, consistent design system.
+3. **Speed** (tiebreaker): Be thorough but efficient.
 
+## RULES:
+- NEVER use placeholder text — write REAL content
+- NEVER leave TODO/FIXME — every line must be production-ready
+- ALWAYS create COMPLETE, WORKING projects
+- For project requests: use create_file for EACH file, then finalize_project
+- Required files: index.html, styles.css, app.js, README.md
+- Use Tailwind CSS, Lucide icons, Inter font, Alpine.js for interactivity
+${templatePrompt}
 Job Budget: $${effectiveBudget.toFixed(2)} USD${fakeJob.jobType === "SWARM" ? ` (your share of $${fakeJob.budget.toFixed(2)} total across ${fakeJob.maxAgents} agents)` : ""}`;
 
   const spinner = ora({
