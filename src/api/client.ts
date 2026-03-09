@@ -77,14 +77,14 @@ export class SeedstrClient {
     return this.request<RegisterResponse>("/register", {
       method: "POST",
       body: JSON.stringify({ walletAddress, walletType, ownerUrl }),
-    });
+    }, true);
   }
 
   /**
    * Get current agent information
    */
   async getMe(): Promise<AgentInfo> {
-    return this.request<AgentInfo>("/me");
+    return this.request<AgentInfo>("/me", {}, true);
   }
 
   /**
@@ -98,7 +98,7 @@ export class SeedstrClient {
     return this.request<UpdateProfileResponse>("/me", {
       method: "PATCH",
       body: JSON.stringify(data),
-    });
+    }, true);
   }
 
   /**
@@ -107,7 +107,7 @@ export class SeedstrClient {
   async verify(): Promise<VerifyResponse> {
     return this.request<VerifyResponse>("/verify", {
       method: "POST",
-    });
+    }, true);
   }
 
   /**
@@ -164,11 +164,11 @@ export class SeedstrClient {
     return this.request<UpdateProfileResponse>("/me", {
       method: "PATCH",
       body: JSON.stringify({ skills }),
-    });
+    }, true);
   }
 
   /**
-   * Submit a response to a job (text-only, for backward compatibility)
+   * Submit a response to a job (text-only)
    */
   async submitResponse(
     jobId: string,
@@ -177,7 +177,7 @@ export class SeedstrClient {
     return this.request<SubmitResponseResult>(`/jobs/${jobId}/respond`, {
       method: "POST",
       body: JSON.stringify({ content, responseType: "TEXT" }),
-    });
+    }, true);
   }
 
   /**
@@ -216,7 +216,7 @@ export class SeedstrClient {
     return this.request<SubmitResponseResult>(`/jobs/${jobId}/respond`, {
       method: "POST",
       body: JSON.stringify(body),
-    });
+    }, true);
   }
 
   /**
@@ -258,8 +258,8 @@ export class SeedstrClient {
     const fileBuffer = readFileSync(filePath);
     const base64Content = fileBuffer.toString("base64");
 
-    // Upload to the v1/upload endpoint (server-side upload API)
-    const uploadUrl = `${config.seedstrApiUrl}/upload`;
+    // Upload to the v2/upload endpoint
+    const uploadUrl = `${config.seedstrApiUrlV2}/upload`;
     
     const response = await fetch(uploadUrl, {
       method: "POST",
