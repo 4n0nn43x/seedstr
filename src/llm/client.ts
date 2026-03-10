@@ -408,11 +408,6 @@ export class LLMClient {
         temperature,
         tools: hasTools ? tools : undefined,
         maxSteps: hasTools ? 20 : 1, // 20 steps = ~5-6 files + finalize + reasoning. Optimized for free tier rate limits (50 req/day)
-        providerOptions: {
-          anthropic: {
-            thinking: { type: 'enabled', budgetTokens: 5000 },
-          },
-        },
         onStepFinish: (step) => {
           // Debug logging for each step
           logger.debug(`Step finished - finishReason: ${step.finishReason}, hasText: ${!!step.text}, toolCalls: ${step.toolCalls?.length || 0}`);

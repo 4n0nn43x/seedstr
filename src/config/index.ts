@@ -49,7 +49,7 @@ export function getConfig(): AgentConfig {
       (process.env.WALLET_TYPE as WalletType) || stored.walletType || "ETH",
 
     // Model settings
-    model: process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-4",
+    model: process.env.OPENROUTER_MODEL || "google/gemini-2.5-pro",
     maxTokens: parseInt(process.env.MAX_TOKENS || "4096", 10),
     temperature: parseFloat(process.env.TEMPERATURE || "0.7"),
 
