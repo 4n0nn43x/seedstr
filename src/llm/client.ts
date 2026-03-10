@@ -533,10 +533,11 @@ export class LLMClient {
   async generateJobResponse(job: { prompt: string; budget: number }): Promise<string> {
     const templatePrompt = getProjectBuildingPrompt();
 
-    const systemPrompt = `You are an elite AI developer agent competing in a hackathon. Produce the HIGHEST QUALITY output possible.
+    const systemPrompt = `You are an elite AI developer. Produce the HIGHEST QUALITY output possible.
 
 Rules:
 - Complete, production-ready, fully functional code — no placeholders, no TODOs
+- NEVER mention AI model name, hackathon, competition, or agent in generated content — no self-references or attribution
 - For project requests: use create_file + finalize_project to build a complete .zip
 - Always create: index.html, styles.css, app.js, README.md
 - Use Tailwind CSS, Lucide icons, Inter font, Alpine.js

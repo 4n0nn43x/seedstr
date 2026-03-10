@@ -1,11 +1,13 @@
 /**
  * Prompt builder: composes 3-layer system prompts based on project classification.
- * Layer 1: Base rules (universal)
+ * Layer 1: Base rules (universal) — compact
  * Layer 2: Category-specific template
- * Layer 3: Web enhancements (web only)
+ * Layer 3: Web design system (web only) — compressed
+ *
+ * Token budget target: <3K for web, <1.5K for script, <1K for text
  */
 
-import { classifyProject, getProjectBuildingPrompt } from '../templates/index.js';
+import { classifyProject, TEMPLATE_INSTRUCTIONS } from '../templates/index.js';
 import { WEB_ENHANCEMENTS } from '../templates/categories/shared.js';
 import { landingPageTemplate } from '../templates/categories/landing-page.js';
 import { dashboardTemplate } from '../templates/categories/dashboard.js';
@@ -38,15 +40,15 @@ const CATEGORY_TEMPLATES: Record<ProjectCategory, CategoryTemplate> = {
   'node-script': nodeScriptTemplate,
   'automation': automationTemplate,
   'data-analysis': dataAnalysisTemplate,
-  'api-backend': pythonScriptTemplate, // Reuse python-script with different guidance
+  'api-backend': pythonScriptTemplate,
   'text-response': {
     type: 'text',
     fileStructure: 'response.md, README.md',
     sectionBlueprint: `
-- **response.md**: The main content, formatted in clean Markdown with proper headings, lists, code blocks as needed
-- **README.md**: Brief context about what was requested and how to read the response`,
+- **response.md**: Main content in clean Markdown (headings, lists, code blocks)
+- **README.md**: Brief context about the request`,
     componentPatterns: '',
-    contentGuidance: 'Write thorough, well-structured Markdown content. Use proper headings, lists, code blocks, and formatting. Content should be comprehensive and directly address the request.',
+    contentGuidance: 'Thorough, well-structured Markdown. Directly address the request with comprehensive content.',
   },
 };
 
@@ -61,91 +63,82 @@ export function buildSystemPrompt(job: Job): string {
   const { type, category } = classifyProject(job.prompt);
   const template = CATEGORY_TEMPLATES[category];
 
-  // Layer 1: Base rules (universal)
-  const basePrompt = buildBasePrompt(type);
+  const parts: string[] = [];
 
-  // Layer 2: Category-specific instructions
-  const categoryPrompt = buildCategoryPrompt(type, category, template);
+  // Layer 1: Base rules (compact, type-aware)
+  parts.push(buildBasePrompt(type));
 
-  // Layer 3: Web enhancements (web only) + design system
-  const enhancementsPrompt = type === 'web' ? buildWebLayer(template) : '';
+  // Layer 2: Category-specific
+  parts.push(buildCategoryPrompt(category, template));
 
-  // Budget-aware quality guidance
-  const qualityGuidance = getQualityGuidance(effectiveBudget);
+  // Layer 3: Web design system (web only, compressed)
+  if (type === 'web') {
+    parts.push(buildWebLayer(template));
+  }
 
-  // Compose final prompt
-  const budgetLine = `Job Budget: $${effectiveBudget.toFixed(2)} USD${job.jobType === 'SWARM' ? ` (your share of $${job.budget.toFixed(2)} total across ${job.maxAgents} agents)` : ''}`;
+  // Quality + budget
+  parts.push(getQualityGuidance(effectiveBudget));
+  parts.push(`Budget: $${effectiveBudget.toFixed(2)}${job.jobType === 'SWARM' ? ` (share of $${job.budget.toFixed(2)} across ${job.maxAgents} agents)` : ''}`);
 
-  return `${basePrompt}\n${categoryPrompt}\n${enhancementsPrompt}\n${qualityGuidance}\n${budgetLine}`;
+  return parts.join('\n');
 }
 
 function buildBasePrompt(type: string): string {
-  return `You are an elite AI developer agent competing in the Seedstr Blind Hackathon ($10K prize pool). You MUST produce the HIGHEST QUALITY output possible. An independent AI judge evaluates your work on three criteria:
+  // Core rules — same for all types, compact
+  let prompt = `You are an elite AI developer. An AI judge scores your work on: Functionality (threshold 5/10 or disqualified), Design (differentiator), Speed (tiebreaker).
 
-1. **Functionality** (CRITICAL — threshold 5/10, below = disqualified): Code must actually WORK. Every button, link, form, and interactive element must be functional. No broken features.
-2. **Design** (differentiator): Visual quality, modern aesthetics, responsive layout, consistent color palette, typography, spacing, animations.
-3. **Speed** (tiebreaker): How fast you respond. Be thorough but efficient.
+## RULES:
+- NEVER placeholder text, TODO/FIXME, or broken code — everything production-ready
+- NEVER mention the AI model, hackathon, competition, or agent in generated content — no "Built by [model]", no "for [hackathon]", no self-references
+- ALL deliverables packaged as zip via create_file + finalize_project
+- Write REAL, contextual, meaningful content throughout`;
 
-## ABSOLUTE RULES:
-- NEVER use placeholder text ("Lorem ipsum", "placeholder", "sample text") — write REAL, contextual, meaningful content
-- NEVER leave TODO, FIXME, or incomplete sections — every line of code must be production-ready
-- NEVER generate broken code — mentally verify all logic, matching tags, event handlers before creating files
-- ALWAYS create a COMPLETE, WORKING deliverable — the AI judge will try to open and use it
-- Package ALL files with create_file + finalize_project. Every submission MUST be a zip.
-
-## How to Respond:
-- **ALL deliverables = zip**: Whether it's a website, script, or text response — ALWAYS use create_file for each file, then finalize_project to package as .zip
-- **Web projects**: Create HTML/CSS/JS files with all CDN dependencies in <head>
-- **Script projects**: Create source files + requirements/package.json + README
-- **Text requests**: Create response.md (content) + README.md (context), then zip them
-- **When unsure**: BUILD IT as files and zip. The hackathon values deliverables.
-
-## Code Quality:
-- Semantic HTML5: <header>, <nav>, <main>, <section>, <article>, <aside>, <footer>
-- Proper error handling (try/catch, null checks, fallback values)
-- Accessible: proper alt texts, ARIA labels, keyboard navigation, focus states
-- Cross-browser: avoid bleeding-edge CSS, use standard approaches
-- Performance: lazy loading images, efficient event delegation, no memory leaks`;
-}
-
-function buildCategoryPrompt(type: string, category: ProjectCategory, template: CategoryTemplate): string {
-  let prompt = `\n## Project Classification: ${type.toUpperCase()} → ${category}\n`;
-  prompt += `\n### Required Files:\n${template.fileStructure}\n`;
-  prompt += `\n### Structure & Sections:\n${template.sectionBlueprint}\n`;
-
-  if (template.componentPatterns) {
-    prompt += `\n### Component Patterns:\n${template.componentPatterns}\n`;
+  // Type-specific delivery instructions
+  if (type === 'web') {
+    prompt += `
+- Create HTML/CSS/JS files with CDN deps in <head>, call lucide.createIcons() after </body>
+- Semantic HTML5, accessible (ARIA, alt, focus states), responsive, cross-browser`;
+  } else if (type === 'script') {
+    prompt += `
+- Create source files + dependency file (requirements.txt / package.json) + README.md
+- Proper error handling, logging, CLI arguments, type hints/docs`;
+  } else {
+    prompt += `
+- Create response.md (content) + README.md (context), then zip`;
   }
-
-  prompt += `\n### Content Guidance:\n${template.contentGuidance}\n`;
 
   return prompt;
 }
 
-function buildWebLayer(template: CategoryTemplate): string {
-  let prompt = '';
+function buildCategoryPrompt(category: ProjectCategory, template: CategoryTemplate): string {
+  let prompt = `\n## Category: ${category}\nFiles: ${template.fileStructure}`;
+  prompt += `\n### Sections:\n${template.sectionBlueprint}`;
 
-  // CDN dependencies (design system from templates/index.ts)
-  const designSystem = getProjectBuildingPrompt();
-  prompt += `\n${designSystem}\n`;
-
-  // Extra CDN additions for specific categories
-  if (template.cdnAdditions) {
-    prompt += `\n### Additional CDN Dependencies (add to <head> alongside the standard ones):\n\`\`\`html\n${template.cdnAdditions}\n\`\`\`\n`;
+  if (template.componentPatterns) {
+    prompt += `\n### Patterns:\n${template.componentPatterns}`;
   }
 
-  // Web enhancements
-  prompt += WEB_ENHANCEMENTS;
+  prompt += `\n### Guidance:\n${template.contentGuidance}`;
+  return prompt;
+}
 
+function buildWebLayer(template: CategoryTemplate): string {
+  let prompt = `\n${TEMPLATE_INSTRUCTIONS}`;
+
+  if (template.cdnAdditions) {
+    prompt += `\n### Extra CDN (add to <head>):\n\`\`\`html\n${template.cdnAdditions}\n\`\`\``;
+  }
+
+  prompt += WEB_ENHANCEMENTS;
   return prompt;
 }
 
 function getQualityGuidance(budget: number): string {
   if (budget < 2) {
-    return `\n## Quality Level (Budget: $${budget.toFixed(2)}): Working and correct > complex and broken. Focus on core functionality, clean code, and a polished result. Keep scope manageable.`;
+    return `\nQuality: Working > complex. Core functionality, clean code, keep scope tight.`;
   } else if (budget <= 10) {
-    return `\n## Quality Level (Budget: $${budget.toFixed(2)}): Balance functionality with polish. Implement all requested features with good design, animations, and attention to detail.`;
+    return `\nQuality: Balance functionality with polish. Good design, animations, attention to detail.`;
   } else {
-    return `\n## Quality Level (Budget: $${budget.toFixed(2)}): Premium delivery. Rich interactions, thorough content, exceptional design, comprehensive features. Go above and beyond.`;
+    return `\nQuality: Premium. Rich interactions, exceptional design, comprehensive features.`;
   }
 }
