@@ -4,7 +4,8 @@ import prompts from "prompts";
 import { getConfig } from "../../config/index.js";
 import { getLLMClient } from "../../llm/client.js";
 import { cleanupProject } from "../../tools/projectBuilder.js";
-import { getProjectBuildingPrompt, isWebProjectRequest } from "../../templates/index.js";
+import { buildSystemPrompt } from "../../agent/promptBuilder.js";
+import { classifyProject } from "../../templates/index.js";
 import type { Job, TokenUsage } from "../../types/index.js";
 
 const MODEL_COSTS: Record<string, { input: number; output: number }> = {
@@ -111,31 +112,13 @@ export async function simulateCommand(options: SimulateOptions): Promise<void> {
   console.log(chalk.gray("  Budget:   ") + chalk.green(`$${budget.toFixed(2)}`));
   console.log(chalk.gray("  Model:    ") + chalk.white(config.model));
   console.log(chalk.gray("  Prompt:   ") + chalk.white(prompt.length > 80 ? prompt.substring(0, 80) + "..." : prompt));
+
+  // Build system prompt using the shared 3-layer prompt builder
+  const classification = classifyProject(fakeJob.prompt);
+  console.log(chalk.gray("  Category: ") + chalk.white(`${classification.type} → ${classification.category}`));
   console.log(chalk.cyan("─".repeat(60)));
 
-  const effectiveBudget = fakeJob.jobType === "SWARM" && fakeJob.budgetPerAgent
-    ? fakeJob.budgetPerAgent
-    : fakeJob.budget;
-
-    // Build enhanced system prompt (same as runner.ts for consistency)
-    const isWebProject = isWebProjectRequest(fakeJob.prompt);
-    const templatePrompt = isWebProject ? getProjectBuildingPrompt() : '';
-
-    const systemPrompt = `You are an elite AI developer agent competing in the Seedstr Blind Hackathon ($10K prize pool). You MUST produce the HIGHEST QUALITY output possible. An independent AI judge evaluates your work on:
-
-1. **Functionality** (CRITICAL — threshold 5/10): Code must WORK. Every interactive element must be functional.
-2. **Design** (differentiator): Modern aesthetics, responsive layout, animations, consistent design system.
-3. **Speed** (tiebreaker): Be thorough but efficient.
-
-## RULES:
-- NEVER use placeholder text — write REAL content
-- NEVER leave TODO/FIXME — every line must be production-ready
-- ALWAYS create COMPLETE, WORKING projects
-- For project requests: use create_file for EACH file, then finalize_project
-- Required files: index.html, styles.css, app.js, README.md
-- Use Tailwind CSS, Lucide icons, Inter font, Alpine.js for interactivity
-${templatePrompt}
-Job Budget: $${effectiveBudget.toFixed(2)} USD${fakeJob.jobType === "SWARM" ? ` (your share of $${fakeJob.budget.toFixed(2)} total across ${fakeJob.maxAgents} agents)` : ""}`;
+  const systemPrompt = buildSystemPrompt(fakeJob);
 
   const spinner = ora({
     text: "Processing job with LLM...",

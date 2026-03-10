@@ -9,6 +9,224 @@ export interface Template {
   files: { path: string; content: string }[];
 }
 
+// ─────────────────────────────────────────
+// Project Classification Types
+// ─────────────────────────────────────────
+
+export type ProjectType = 'web' | 'script' | 'text';
+
+export type WebCategory =
+  | 'landing-page' | 'dashboard' | 'game' | 'portfolio' | 'ecommerce'
+  | 'calculator-tool' | 'blog-content' | 'react-app' | 'generic-web';
+
+export type ScriptCategory =
+  | 'python-script' | 'node-script' | 'automation' | 'data-analysis' | 'api-backend';
+
+export type TextCategory = 'text-response';
+
+export type ProjectCategory = WebCategory | ScriptCategory | TextCategory;
+
+export interface ProjectClassification {
+  type: ProjectType;
+  category: ProjectCategory;
+}
+
+// ─────────────────────────────────────────
+// Classifier
+// ─────────────────────────────────────────
+
+/**
+ * Classify a prompt into project type and category using weighted keyword scoring.
+ */
+export function classifyProject(prompt: string): ProjectClassification {
+  const lower = prompt.toLowerCase();
+
+  // ── Script detection ──
+  const scriptKeywords: [string, ScriptCategory, number][] = [
+    ['python', 'python-script', 3],
+    ['flask', 'api-backend', 4],
+    ['fastapi', 'api-backend', 4],
+    ['django', 'api-backend', 4],
+    ['express', 'api-backend', 4],
+    ['rest api', 'api-backend', 5],
+    ['api server', 'api-backend', 5],
+    ['api endpoint', 'api-backend', 5],
+    ['backend', 'api-backend', 3],
+    ['server', 'api-backend', 2],
+    ['scraper', 'python-script', 5],
+    ['scraping', 'python-script', 5],
+    ['crawler', 'python-script', 5],
+    ['bot', 'python-script', 3],
+    ['cli', 'node-script', 3],
+    ['command line', 'node-script', 3],
+    ['script', 'python-script', 2],
+    ['automate', 'automation', 4],
+    ['automation', 'automation', 5],
+    ['cron', 'automation', 4],
+    ['scheduled', 'automation', 3],
+    ['data analysis', 'data-analysis', 5],
+    ['pandas', 'data-analysis', 5],
+    ['numpy', 'data-analysis', 4],
+    ['matplotlib', 'data-analysis', 4],
+    ['csv', 'data-analysis', 3],
+    ['dataset', 'data-analysis', 4],
+    ['analyze data', 'data-analysis', 5],
+    ['node', 'node-script', 2],
+    ['npm', 'node-script', 3],
+    ['package.json', 'node-script', 4],
+  ];
+
+  // Score script categories
+  const scriptScores = new Map<ScriptCategory, number>();
+  let totalScriptScore = 0;
+  for (const [keyword, category, weight] of scriptKeywords) {
+    if (lower.includes(keyword)) {
+      scriptScores.set(category, (scriptScores.get(category) || 0) + weight);
+      totalScriptScore += weight;
+    }
+  }
+
+  // ── Web detection ──
+  const webKeywords: [string, WebCategory, number][] = [
+    // React
+    ['react', 'react-app', 5],
+    ['jsx', 'react-app', 5],
+    ['hooks', 'react-app', 3],
+    ['usestate', 'react-app', 5],
+    ['useeffect', 'react-app', 5],
+    ['component', 'react-app', 2],
+    // Dashboard
+    ['dashboard', 'dashboard', 5],
+    ['admin panel', 'dashboard', 5],
+    ['analytics', 'dashboard', 4],
+    ['chart', 'dashboard', 3],
+    ['metrics', 'dashboard', 3],
+    // Game
+    ['game', 'game', 5],
+    ['snake', 'game', 5],
+    ['tetris', 'game', 5],
+    ['pong', 'game', 5],
+    ['puzzle', 'game', 4],
+    ['arcade', 'game', 5],
+    ['platformer', 'game', 5],
+    // Portfolio
+    ['portfolio', 'portfolio', 5],
+    ['personal website', 'portfolio', 5],
+    ['resume', 'portfolio', 4],
+    ['cv website', 'portfolio', 5],
+    // E-commerce
+    ['ecommerce', 'ecommerce', 5],
+    ['e-commerce', 'ecommerce', 5],
+    ['shop', 'ecommerce', 4],
+    ['store', 'ecommerce', 3],
+    ['cart', 'ecommerce', 4],
+    ['product', 'ecommerce', 2],
+    // Calculator / tool
+    ['calculator', 'calculator-tool', 5],
+    ['converter', 'calculator-tool', 5],
+    ['generator', 'calculator-tool', 3],
+    ['tool', 'calculator-tool', 2],
+    // Blog
+    ['blog', 'blog-content', 5],
+    ['article', 'blog-content', 3],
+    ['post', 'blog-content', 2],
+    // Landing page
+    ['landing page', 'landing-page', 5],
+    ['homepage', 'landing-page', 4],
+    ['saas', 'landing-page', 4],
+    ['startup', 'landing-page', 3],
+    // Generic web strong indicators
+    ['website', 'generic-web', 3],
+    ['web app', 'generic-web', 3],
+    ['webapp', 'generic-web', 3],
+    ['frontend', 'generic-web', 3],
+    ['front-end', 'generic-web', 3],
+    ['html', 'generic-web', 2],
+    ['webpage', 'generic-web', 3],
+    ['spa', 'generic-web', 3],
+    ['responsive', 'generic-web', 2],
+    ['pwa', 'generic-web', 3],
+    ['chrome extension', 'generic-web', 3],
+    ['browser extension', 'generic-web', 3],
+    ['widget', 'generic-web', 2],
+    ['clone', 'generic-web', 3],
+    ['replica', 'generic-web', 3],
+    ['prototype', 'generic-web', 2],
+    ['mockup', 'generic-web', 2],
+    ['wireframe', 'generic-web', 2],
+    ['quiz', 'generic-web', 3],
+    ['todo app', 'generic-web', 3],
+    ['gallery', 'generic-web', 3],
+    ['mobile app', 'generic-web', 3],
+    ['single page', 'generic-web', 3],
+  ];
+
+  // Score web categories
+  const webScores = new Map<WebCategory, number>();
+  let totalWebScore = 0;
+  for (const [keyword, category, weight] of webKeywords) {
+    if (lower.includes(keyword)) {
+      webScores.set(category, (webScores.get(category) || 0) + weight);
+      totalWebScore += weight;
+    }
+  }
+
+  // Also check action + target combos for generic web
+  const actionWords = ['build', 'create', 'make', 'design', 'develop', 'code', 'implement', 'construct'];
+  const targetWords = ['page', 'site', 'app', 'ui', 'interface', 'form', 'layout', 'screen', 'view', 'panel'];
+  const hasAction = actionWords.some(a => lower.includes(a));
+  const hasTarget = targetWords.some(t => lower.includes(t));
+  if (hasAction && hasTarget) {
+    webScores.set('generic-web', (webScores.get('generic-web') || 0) + 2);
+    totalWebScore += 2;
+  }
+
+  // ── Determine winner ──
+
+  // If script scores dominate, it's a script
+  if (totalScriptScore > totalWebScore && totalScriptScore >= 3) {
+    const bestScript = [...scriptScores.entries()].sort((a, b) => b[1] - a[1])[0];
+    return { type: 'script', category: bestScript[0] };
+  }
+
+  // If web scores are present, it's web
+  if (totalWebScore >= 2) {
+    let bestWeb = [...webScores.entries()].sort((a, b) => b[1] - a[1])[0];
+
+    // If "react" + another web category, check if react should win
+    if (bestWeb[0] === 'generic-web' && webScores.has('react-app') && (webScores.get('react-app') || 0) >= 3) {
+      bestWeb = ['react-app', webScores.get('react-app')!];
+    }
+
+    // Promote generic-web to landing-page if no specific category matched strongly
+    if (bestWeb[0] === 'generic-web' && bestWeb[1] <= 5) {
+      // Check if any specific category has a reasonable score
+      const specificCategories = [...webScores.entries()].filter(([cat]) => cat !== 'generic-web');
+      if (specificCategories.length > 0) {
+        const topSpecific = specificCategories.sort((a, b) => b[1] - a[1])[0];
+        if (topSpecific[1] >= 3) {
+          return { type: 'web', category: topSpecific[0] };
+        }
+      }
+    }
+
+    return { type: 'web', category: bestWeb[0] };
+  }
+
+  // If some script score exists but not dominant
+  if (totalScriptScore > 0) {
+    const bestScript = [...scriptScores.entries()].sort((a, b) => b[1] - a[1])[0];
+    return { type: 'script', category: bestScript[0] };
+  }
+
+  // Default: text response
+  return { type: 'text', category: 'text-response' };
+}
+
+// ─────────────────────────────────────────
+// Design System (used by web projects)
+// ─────────────────────────────────────────
+
 // The canonical HTML head that MUST be in every generated HTML file
 const HTML_HEAD_BLOCK = `<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -135,54 +353,26 @@ Common icons: home, search, menu, x, plus, minus, edit, trash-2, settings, user,
 **Dark Mode (when appropriate):**
 - Add class="dark" to <html> element
 - Use dark: prefix: dark:bg-gray-900 dark:text-white dark:border-gray-800
-
-### File Structure (ALWAYS create ALL of these):
-1. **index.html** — Complete page with all sections, navbar, hero, features, footer
-2. **styles.css** — Custom animations, keyframes, any styles beyond Tailwind utilities
-3. **app.js** — All JavaScript: Alpine.js components, event handlers, interactive features, data management. Initialize lucide icons at the end.
-4. **README.md** — Project name, description, features list, tech stack, how to open/run
 `;
 
 /**
- * Get the full system prompt enhancement for project building
+ * Get the full system prompt enhancement for project building (web design system)
  */
 export function getProjectBuildingPrompt(): string {
   return TEMPLATE_INSTRUCTIONS;
 }
 
 /**
- * Detect if a prompt is asking for a project that should be built as files
- * Uses broad matching to avoid missing valid project requests
+ * Detect if a prompt is asking for a web project.
+ * Now delegates to classifyProject internally.
  */
 export function isWebProjectRequest(prompt: string): boolean {
-  const lower = prompt.toLowerCase();
-
-  // Strong indicators — any one of these means it's a project
-  const strongKeywords = [
-    'website', 'web app', 'webapp', 'landing page', 'portfolio',
-    'dashboard', 'frontend', 'front-end', 'html', 'webpage',
-    'react', 'next.js', 'nextjs', 'vue', 'angular', 'svelte',
-    'homepage', 'blog', 'e-commerce', 'ecommerce', 'shop', 'store',
-    'gallery', 'todo app', 'calculator app', 'game', 'quiz',
-    'single page', 'spa', 'responsive', 'mobile app', 'pwa',
-    'chrome extension', 'browser extension', 'widget',
-    'saas', 'platform', 'tool', 'application', 'prototype',
-    'mockup', 'wireframe', 'clone', 'replica',
-  ];
-  if (strongKeywords.some(kw => lower.includes(kw))) return true;
-
-  // Combination indicators — "build/create/make" + noun
-  const actionWords = ['build', 'create', 'make', 'design', 'develop', 'code', 'implement', 'construct'];
-  const targetWords = ['page', 'site', 'app', 'ui', 'interface', 'form', 'layout', 'component', 'screen', 'view', 'panel', 'project'];
-  const hasAction = actionWords.some(a => lower.includes(a));
-  const hasTarget = targetWords.some(t => lower.includes(t));
-  if (hasAction && hasTarget) return true;
-
-  return false;
+  return classifyProject(prompt).type === 'web';
 }
 
 export default {
   getProjectBuildingPrompt,
   isWebProjectRequest,
+  classifyProject,
   TEMPLATE_INSTRUCTIONS,
 };

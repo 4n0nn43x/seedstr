@@ -6,7 +6,7 @@ import { logger } from "../utils/logger.js";
 import { webSearch, type WebSearchResult } from "../tools/webSearch.js";
 import { calculator, type CalculatorResult } from "../tools/calculator.js";
 import { ProjectBuilder, type ProjectFile, type ProjectBuildResult } from "../tools/projectBuilder.js";
-import { getProjectBuildingPrompt, isWebProjectRequest } from "../templates/index.js";
+import { getProjectBuildingPrompt } from "../templates/index.js";
 
 // Errors that are worth retrying (usually transient LLM output issues)
 const RETRYABLE_ERROR_PATTERNS = [
@@ -223,7 +223,7 @@ export class LLMClient {
 
       // Project builder tool - creates files that will be packaged into a zip
       tools.create_file = tool({
-        description: `Create a file for a deliverable code project (website, app, script, tool). Only use this when the job is asking for an actual downloadable project — NOT for text-based requests like writing tweets, emails, essays, or answers. Call multiple times for multi-file projects, then use finalize_project to package them. ALWAYS create at minimum: index.html, styles.css, app.js, and README.md for web projects. Use Tailwind CSS via CDN and modern design patterns.`,
+        description: `Create a file for a deliverable project. Works for any file type (HTML, CSS, JS, Python, JSON, Markdown, etc.). Call multiple times for multi-file projects, then use finalize_project to package them into a zip. Use this for ALL deliverables — websites, scripts, text responses — everything gets packaged as a zip.`,
         parameters: z.object({
           path: z
             .string()

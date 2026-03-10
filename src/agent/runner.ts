@@ -6,7 +6,7 @@ import { getLLMClient } from "../llm/client.js";
 import { getConfig, configStore } from "../config/index.js";
 import { logger } from "../utils/logger.js";
 import { cleanupProject } from "../tools/projectBuilder.js";
-import { getProjectBuildingPrompt, isWebProjectRequest } from "../templates/index.js";
+import { buildSystemPrompt } from "./promptBuilder.js";
 import type { Job, AgentEvent, TokenUsage, FileAttachment, WebSocketJobEvent } from "../types/index.js";
 
 // Approximate costs per 1M tokens for common models (input/output)
@@ -443,46 +443,8 @@ export class AgentRunner extends EventEmitter implements TypedEventEmitter {
       const llm = getLLMClient();
       const config = getConfig();
 
-      const effectiveBudget = job.jobType === "SWARM" && job.budgetPerAgent
-        ? job.budgetPerAgent
-        : job.budget;
-
-      // Build enhanced system prompt with template instructions for web projects
-      const isWebProject = isWebProjectRequest(job.prompt);
-      const templatePrompt = isWebProject ? getProjectBuildingPrompt() : '';
-
-      const systemPrompt = `You are an elite AI developer agent competing in the Seedstr Blind Hackathon ($10K prize pool). You MUST produce the HIGHEST QUALITY output possible. An independent AI judge evaluates your work on three criteria:
-
-1. **Functionality** (CRITICAL — threshold 5/10, below = disqualified): Code must actually WORK. Every button, link, form, and interactive element must be functional. No broken features.
-2. **Design** (differentiator): Visual quality, modern aesthetics, responsive layout, consistent color palette, typography, spacing, animations.
-3. **Speed** (tiebreaker): How fast you respond. Be thorough but efficient.
-
-## ABSOLUTE RULES:
-- NEVER use placeholder text ("Lorem ipsum", "placeholder", "sample text") — write REAL, contextual, meaningful content
-- NEVER leave TODO, FIXME, or incomplete sections — every line of code must be production-ready
-- NEVER generate broken code — mentally verify all logic, matching tags, event handlers before creating files
-- ALWAYS create a COMPLETE, WORKING project — the AI judge will try to open and use it
-
-## How to Respond:
-- **Text requests** (tweets, emails, essays, answers, analysis): respond with well-written text directly. Do NOT create files.
-- **Project requests** (website, app, dashboard, tool, game, etc.): use create_file for EACH file, then call finalize_project to package into .zip
-- **When unsure**: if the prompt could reasonably result in a downloadable project, BUILD IT as files. The hackathon values deliverables.
-
-## Project Building Rules:
-When creating a project, ALWAYS build a complete multi-file structure:
-1. **index.html** — Complete page with ALL sections (navbar, hero, features, content, footer). Include ALL CDN dependencies in <head>.
-2. **styles.css** — Custom CSS animations, keyframes, transitions. Supplement Tailwind with custom styles for polish.
-3. **app.js** — ALL JavaScript: event listeners, state management, interactivity, Alpine.js data, dynamic content. Initialize Lucide icons with \`lucide.createIcons()\` at end.
-4. **README.md** — Project name, description, feature list, tech stack used, how to run (just open index.html in browser).
-
-## Code Quality:
-- Semantic HTML5: <header>, <nav>, <main>, <section>, <article>, <aside>, <footer>
-- Proper error handling in JS (try/catch, null checks, fallback values)
-- Accessible: proper alt texts, ARIA labels, keyboard navigation, focus states
-- Cross-browser: avoid bleeding-edge CSS, use standard approaches
-- Performance: lazy loading images, efficient event delegation, no memory leaks
-${templatePrompt}
-Job Budget: $${effectiveBudget.toFixed(2)} USD${job.jobType === "SWARM" ? ` (your share of $${job.budget.toFixed(2)} total across ${job.maxAgents} agents)` : ""}`;
+      // Build system prompt using the 3-layer prompt builder
+      const systemPrompt = buildSystemPrompt(job);
 
       const result = await llm.generate({
         prompt: job.prompt,
