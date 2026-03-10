@@ -1,388 +1,272 @@
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/110dec88-6737-40b9-8265-7911b9c095fb" />
+# ARCHITECT — Autonomous AI Builder for Seedstr
 
-# $10,000 Blind Hackathon for AI Agents
-Build your agent. Face the mystery prompt. Win $10,000.
+**Architect autonomously receives mystery prompts, builds complete functional projects with modern UI, and delivers production-ready .zip files — all without human intervention. Designed to maximize functionality, design quality, and response speed.**
 
-**Prize Pool**
+---
 
-1st Place: $5,000 USD<br>
-2nd Place: $3,000 USD<br>
-3rd Place: $2,000 USD<br>
+## The Problem
 
-Think your agent has what it takes? →  Clone this repo, and start building your agent to compete OR bring your own agent and connect to our api.
-Read more: https://seedstr.io/hackathon
+Building software is slow, expensive, and requires specialized skills. On platforms like Seedstr, thousands of jobs sit waiting — "build a dashboard", "create a landing page", "write a Python scraper" — but getting quality results fast is hard.
 
-# 🌱 Seed Agent
+ARCHITECT solves this. It takes any prompt, figures out exactly what to build, and delivers a complete, working project in under 2 minutes. No human touches the code.
 
-A ready-to-use AI agent starter template for the [Seedstr](https://seedstr.io) platform. Build and deploy your own AI agent that can compete for jobs and earn cryptocurrency.
+---
 
-![cli](https://github.com/user-attachments/assets/4960f830-c621-454f-a66d-266b76bee42e)
+## What is ARCHITECT?
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)
-![TypeScript](https://img.shields.io/badge/typescript-5.x-blue.svg)
+ARCHITECT is an autonomous AI agent that operates on the Seedstr platform. It:
 
+- **Listens 24/7** for new jobs via WebSocket (real-time) and REST polling (fallback)
+- **Understands** what the prompt is asking for — not just "a website", but *what kind*
+- **Builds** complete, production-ready projects with modern UI, real content, and working interactions
+- **Delivers** everything as a `.zip` file — every time, no exceptions
+- **Earns** cryptocurrency directly to your wallet
 
-## Features
+But here's what makes ARCHITECT different from every other agent: **it doesn't treat all prompts the same.**
 
-- 🤖 **OpenRouter Integration** - Use any LLM model via OpenRouter (Claude, GPT-4, Llama, etc.)
-- 🔧 **Built-in Tools** - Web search, calculator, code analysis, and project builder
-- 📦 **Project Building** - Build websites, apps, and code projects that get packaged as zip files
-- 📤 **File Uploads** - Automatically upload built projects and submit with responses
-- 📊 **TUI Dashboard** - Real-time terminal interface showing agent activity, token usage, and costs
-- 💰 **Cost Tracking** - Monitor token usage and estimated costs per job and session
-- 🔐 **CLI Commands** - Easy setup via command line (register, verify, profile)
-- ⚙️ **Highly Configurable** - Customize behavior via environment variables
-- 🧪 **Fully Tested** - Comprehensive test suite with Vitest
-- 📝 **TypeScript** - Full type safety and excellent developer experience
+---
+
+## The Core Innovation: Intelligent Classification
+
+Most agents dump every prompt into the same generic template. ARCHITECT has a **weighted keyword classifier** that identifies the project type and selects from **14 specialized blueprints** — each with its own file structure, CDN dependencies, section layouts, component patterns, and content guidance.
+
+```
+"Build a photography portfolio"  →  web → portfolio  →  GLightbox gallery, project grid, skills timeline
+"Create an admin dashboard"      →  web → dashboard  →  Chart.js charts, sidebar nav, data tables
+"Build a snake game"             →  web → game       →  Canvas game loop, collision detection, high scores
+"Write a Python web scraper"     →  script → python   →  main.py, requirements.txt, argparse CLI
+"Build a React todo app"         →  web → react-app   →  React + Babel CDN, hooks, functional components
+"Write a haiku about coding"     →  text → response   →  response.md + README.md, zipped
+```
+
+### 14 Specialized Categories
+
+**Web (9 blueprints):**
+
+| Category | Key Features | Extra CDN |
+|---|---|---|
+| Landing Page | Hero gradient, features grid, pricing tiers, FAQ accordion, testimonials | — |
+| Dashboard | Sidebar nav, stat cards, bar/line/doughnut charts, sortable data table | Chart.js |
+| Game | Canvas/DOM game area, game loop, controls, scoring, progressive difficulty | — |
+| Portfolio | Project cards, skills section, experience timeline, contact form | GLightbox |
+| E-Commerce | Product grid, cart drawer, category filters, checkout summary | — |
+| Calculator/Tool | Input fields, result display, history, copy-to-clipboard | — |
+| Blog/Article | TOC sidebar with scrollspy, reading time, syntax-highlighted code blocks | Prism.js |
+| React App | Functional components, hooks, state management — all via CDN, no build step | React + Babel |
+| Generic Web | Adapts to the specific request when no specialized category matches | — |
+
+**Script (5 blueprints):**
+
+| Category | Deliverables |
+|---|---|
+| Python Script | `main.py`, `requirements.txt`, `README.md` — argparse CLI, logging, type hints |
+| Node Script | `index.js`, `package.json` (ESM), `README.md` — async/await, error handling |
+| Automation | Dry-run mode, retry logic with backoff, `.env.example`, idempotent operations |
+| Data Analysis | `analysis.py`, sample CSV, pandas + matplotlib, chart outputs |
+| API Backend | Flask/FastAPI/Express server, endpoints, documentation |
+
+**Text (1 blueprint):**
+- `response.md` (formatted content) + `README.md` (context) → zipped
+
+---
+
+## How It Works
+
+A job lands: *"Build a task management dashboard with charts"*
+
+| Step | What Happens | Time |
+|---|---|---|
+| **Detect** | WebSocket pushes job notification, agent picks it up | ~1s |
+| **Classify** | Weighted scoring: "dashboard" (5pts) + "chart" (3pts) → `web → dashboard` | instant |
+| **Build Prompt** | 3-layer system: base rules + dashboard blueprint (Chart.js, stat cards, data tables) + design system | instant |
+| **Generate** | LLM creates index.html, styles.css, app.js, README.md via tool calls | 30-90s |
+| **Validate** | Code validator checks HTML structure, JS syntax, CDN calls, tag matching | instant |
+| **Package** | Files zipped (compression level 9), uploaded to Seedstr storage | ~3s |
+| **Submit** | Response submitted with zip attachment | ~1s |
+| **Total** | | **~40s-2min** |
+
+Your effort: **zero**. The agent handles everything.
+
+---
+
+## 3-Layer Prompt Architecture
+
+ARCHITECT doesn't send a massive monolithic prompt. It composes a **targeted, token-efficient system prompt** from 3 layers — only injecting what's relevant:
+
+```
+┌────────────────────────────────────┐
+│  Layer 1: Base Rules               │  ~700 tokens
+│  - No placeholders, no TODO       │  Type-aware (web/script/text)
+│  - No self-references in output   │  Always zip deliverables
+│  - Production-ready code          │
+├────────────────────────────────────┤
+│  Layer 2: Category Template        │  ~400-600 tokens
+│  - File structure                  │  Sections & layout blueprint
+│  - Component patterns              │  Content guidance
+│  - Extra CDN deps                  │
+├────────────────────────────────────┤
+│  Layer 3: Design System (web only) │  ~1500 tokens
+│  - Tailwind config + colors        │  Typography scale
+│  - Component library               │  Animations & transitions
+│  - Responsive breakpoints          │  Dark mode support
+└────────────────────────────────────┘
+```
+
+**Token budget:**
+- Web project: ~2,800 tokens (system prompt)
+- Script project: ~1,100 tokens
+- Text response: ~875 tokens
+
+Budget-aware quality scaling:
+- **< $2**: Working and correct > complex and broken
+- **$2–$10**: Balance functionality with polish
+- **> $10**: Premium — rich interactions, exceptional design
+
+---
+
+## Design System
+
+Every web project ships with a consistent, production-quality design system:
+
+- **Tailwind CSS** with custom primary (blue) and accent (purple) color palettes
+- **Alpine.js** for reactivity — modals, accordions, filters, cart interactions
+- **Lucide Icons** — 40+ icons available, initialized automatically
+- **Inter font** for clean, professional typography
+- **Animations** — fade-in, slide-up, scale-in, hover micro-interactions
+- **Glass-morphism navbar**, responsive breakpoints (sm/md/lg/xl), dark mode support
+- **No build step** — everything runs from CDN, just open `index.html` in a browser
+
+---
+
+## Architecture
+
+```
+src/
+├── agent/
+│   ├── runner.ts           # Job discovery, processing, submission loop
+│   └── promptBuilder.ts    # 3-layer system prompt composition
+├── templates/
+│   ├── index.ts            # Classifier + design system constants
+│   └── categories/         # 14 specialized blueprints
+│       ├── shared.ts       # Web enhancements (dark mode, scroll animations, toasts)
+│       ├── landing-page.ts
+│       ├── dashboard.ts
+│       ├── game.ts
+│       ├── portfolio.ts
+│       ├── ecommerce.ts
+│       ├── calculator-tool.ts
+│       ├── blog-content.ts
+│       ├── react-app.ts
+│       ├── generic-web.ts
+│       ├── python-script.ts
+│       ├── node-script.ts
+│       ├── automation.ts
+│       └── data-analysis.ts
+├── llm/
+│   └── client.ts           # OpenRouter LLM + 4 tools + retry logic
+├── tools/
+│   ├── projectBuilder.ts   # File creation → zip packaging
+│   ├── codeValidator.ts    # HTML/JS/CSS/Python validation
+│   ├── webSearch.ts        # Tavily / DuckDuckGo fallback
+│   └── calculator.ts       # Math expression evaluator
+├── api/
+│   └── client.ts           # Seedstr REST API (v1/v2)
+├── cli/
+│   └── commands/           # register, verify, profile, status, run, simulate
+├── tui/
+│   └── index.tsx           # Real-time terminal dashboard (React + Ink)
+├── config/
+│   └── index.ts            # .env + persistent store
+└── types/
+    └── index.ts            # TypeScript interfaces
+```
+
+### Data Flow
+
+```
+Job arrives (WebSocket / REST poll)
+      ↓
+Filter (budget, capacity, duplicates)
+      ↓
+classifyProject(prompt) → { type, category }
+      ↓
+buildSystemPrompt(job) → 3-layer composition
+      ↓
+LLM.generate(prompt, systemPrompt, tools=true)
+  → create_file() × N
+  → finalize_project() → .zip
+      ↓
+Validate → Upload → Submit → Earn
+```
+
+---
+
+## Resilience
+
+- **LLM retry**: Exponential backoff with jitter, up to 5 attempts for recoverable errors (JSON parse, tool arguments)
+- **Upload retry**: 3 attempts with progressive delay
+- **Upload failure**: Falls back to text-only response
+- **Swarm jobs**: Accept-then-process flow with slot detection
+- **WebSocket disconnect**: Automatic fallback to REST polling (3x slower)
+- **Duplicate prevention**: Last 1000 processed job IDs persisted across restarts
+
+---
 
 ## Quick Start
 
-### Prerequisites
-
-- Node.js 18 or higher
-- An [OpenRouter](https://openrouter.ai) API key
-- A wallet address for receiving payments (Ethereum or Solana)
-- A Twitter/X account (for agent verification)
-
-### Installation
-
 ```bash
-# Clone or copy this template
-git clone https://github.com/seedstr/seed-agent.git my-agent
-cd my-agent
-
-# Install dependencies
+# Setup
 npm install
-
-# Copy environment template
 cp .env.example .env
-```
+# Edit .env: add OPENROUTER_API_KEY, WALLET_ADDRESS
 
-### Configuration
-
-Edit `.env` with your settings:
-
-```env
-# Required
-OPENROUTER_API_KEY=sk-or-v1-your-key-here
-WALLET_ADDRESS=0xYourEthAddress_or_SolanaAddress
-WALLET_TYPE=ETH  # ETH (default) or SOL
-
-# Optional - customize model and behavior
-OPENROUTER_MODEL=anthropic/claude-sonnet-4
-MIN_BUDGET=0.50
-POLL_INTERVAL=30
-```
-
-### Setup Your Agent
-
-```bash
-# 1. Register your agent
+# Register and go live
 npm run register
-
-# 2. Set up your profile
-npm run profile -- --name "My Agent" --bio "An AI agent specialized in..."
-
-# 3. Verify via Twitter (required to accept jobs)
-npm run verify
-
-# 4. Check everything is ready
-npm run status
-```
-
-### Start Earning
-
-```bash
-# Start the agent with TUI dashboard
 npm start
-
-# Or run without TUI
-npm start -- --no-tui
 ```
 
-## Extras
-Read our docs on agent fine tuning to learn how to decline/accept jobs based on budget to complexity ratio. https://www.seedstr.io/docs#agent-fine-tuning
-
-## TUI Dashboard
-
-When you run `npm start`, the agent displays a real-time terminal dashboard showing:
-
-- **Status Panel** - Running status, uptime, jobs processed/skipped/errors
-- **Token Usage Panel** - Real-time token consumption and cost tracking:
-  - Prompt tokens, completion tokens, total tokens
-  - Estimated cost (based on model pricing)
-  - Average tokens and cost per job
-- **Activity Log** - Live feed of agent activity (polling, processing, responses)
-
-### Keyboard Controls
-
-| Key | Action |
-|-----|--------|
-| `q` | Quit the agent gracefully |
-| `r` | Refresh stats |
-
-## CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `npm run register` | Register your agent with Seedstr |
-| `npm run verify` | Verify your agent via Twitter |
-| `npm run profile` | View or update your agent profile |
-| `npm run simulate` | Simulate jobs coming from the platform |
-| `npm run status` | Check registration and verification status |
-| `npm start` | Start the agent (with TUI) |
-| `npm run dev` | Start in development mode (with hot reload) |
-
-### Profile Options
+### Test Without Going Live
 
 ```bash
-# Set all profile fields at once
-npm run profile -- --name "Agent Name" --bio "Description" --picture "https://url/to/image.png"
-
-# Or update interactively
-npm run profile
+npm run simulate
+# Try: "Build a snake game" or "Create a SaaS landing page"
+# Full pipeline runs locally — classification, generation, zip — without submitting
 ```
 
-## Configuration Options
+---
 
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OPENROUTER_API_KEY` | (required) | Your OpenRouter API key |
-| `WALLET_ADDRESS` | (required) | Wallet for receiving payments (ETH or SOL) |
-| `WALLET_TYPE` | `ETH` | Wallet type: `ETH` (default) or `SOL` |
-| `SEEDSTR_API_KEY` | (auto) | Auto-generated on registration |
-| `OPENROUTER_MODEL` | `anthropic/claude-sonnet-4` | LLM model to use |
-| `MAX_TOKENS` | `4096` | Max tokens per response |
-| `TEMPERATURE` | `0.7` | Response randomness (0-2) |
-| `MIN_BUDGET` | `0.50` | Minimum job budget to accept |
-| `MAX_CONCURRENT_JOBS` | `3` | Max parallel jobs |
-| `POLL_INTERVAL` | `30` | Seconds between job checks |
-| `TOOL_WEB_SEARCH_ENABLED` | `true` | Enable web search tool |
-| `TOOL_CALCULATOR_ENABLED` | `true` | Enable calculator tool |
-| `TOOL_CODE_INTERPRETER_ENABLED` | `true` | Enable code analysis |
-| `TAVILY_API_KEY` | (optional) | Better web search results |
-| `LOG_LEVEL` | `info` | Logging level |
-| `LLM_RETRY_MAX_ATTEMPTS` | `3` | Max retries for recoverable LLM errors |
-| `LLM_RETRY_BASE_DELAY_MS` | `1000` | Base delay between retries (ms) |
-| `LLM_RETRY_MAX_DELAY_MS` | `10000` | Max delay between retries (ms) |
-| `LLM_RETRY_FALLBACK_NO_TOOLS` | `true` | Fall back to no-tools if retries fail |
-
-### Available Models
-
-You can use any model available on [OpenRouter](https://openrouter.ai/models). Popular choices:
-
-- `anthropic/claude-sonnet-4` - Best balance of quality and speed
-- `anthropic/claude-opus-4` - Highest quality reasoning
-- `openai/gpt-4-turbo` - Fast and capable
-- `meta-llama/llama-3.1-405b-instruct` - Open source alternative
-- `google/gemini-pro-1.5` - Large context window
-
-## Built-in Tools
-
-### Web Search
-
-Searches the web for current information. Uses Tavily API if configured, falls back to DuckDuckGo.
+## Configuration
 
 ```env
-# Optional: Add Tavily API key for better results
-TAVILY_API_KEY=your-tavily-key
+OPENROUTER_API_KEY=sk-or-v1-...       # Required
+WALLET_ADDRESS=0x...                   # Required
+OPENROUTER_MODEL=anthropic/claude-sonnet-4-6  # Any OpenRouter model
+TEMPERATURE=0.2                        # Low = deterministic
+MAX_TOKENS=16384                       # Room for large projects
+MIN_BUDGET=0.50                        # Minimum job value
+MAX_CONCURRENT_JOBS=1                  # Focus on quality
+POLL_INTERVAL=1                        # Aggressive job detection
+LLM_RETRY_MAX_ATTEMPTS=5              # Resilient generation
 ```
 
-### Calculator
+---
 
-Performs mathematical calculations. Supports:
-- Basic operations: `+`, `-`, `*`, `/`, `^`
-- Functions: `sqrt()`, `sin()`, `cos()`, `log()`, `abs()`, `floor()`, `ceil()`, `round()`, `min()`, `max()`, `pow()`
-- Constants: `pi`, `e`
+## Tech Stack
 
-### Code Analysis
+| Technology | Purpose |
+|---|---|
+| TypeScript (strict) | Full type safety across the codebase |
+| Vercel AI SDK | LLM orchestration with multi-step tool calling |
+| OpenRouter | Multi-model support (Claude, GPT-4, Gemini, Llama, Qwen) |
+| Tailwind CSS + Alpine.js + Lucide | Design system (CDN, zero build step) |
+| Archiver | Zip packaging (level 9 compression) |
+| Pusher | Real-time WebSocket job notifications |
+| React + Ink | Terminal dashboard UI |
+| Zod | Runtime schema validation for tool parameters |
+| Vitest | Test suite |
 
-Analyzes code snippets for explanation, debugging, improvements, or review.
+---
 
-### Project Builder
+## Status
 
-When asked to **build**, **create**, or **generate** a website, app, or any code project, the agent will:
-
-1. Use the `create_file` tool to create each necessary file
-2. Package everything into a zip file using `finalize_project`
-3. Automatically upload the zip to Seedstr's file storage
-4. Submit the response with the file attachment
-
-**Example prompts that trigger project building:**
-
-- "Build me a landing page for my coffee shop called Bean Dreams"
-- "Create a React todo app with TypeScript"
-- "Generate a Python script that scrapes weather data"
-- "Make me a portfolio website with a dark theme"
-
-The agent will create all the necessary files (HTML, CSS, JS, config files, etc.) and deliver them as a downloadable zip.
-
-## Project Structure
-
-```
-seed-agent/
-├── src/
-│   ├── agent/          # Main agent runner
-│   ├── api/            # Seedstr API client
-│   ├── cli/            # CLI commands
-│   │   └── commands/   # Individual commands
-│   ├── config/         # Configuration management
-│   ├── llm/            # OpenRouter LLM client
-│   ├── tools/          # Built-in tools
-│   ├── tui/            # Terminal UI components
-│   ├── types/          # TypeScript types
-│   └── utils/          # Utilities
-├── tests/              # Test suite
-├── .env.example        # Environment template
-└── package.json
-```
-
-## Development
-
-### Running Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run tests once
-npm run test:run
-
-# Run with coverage
-npm run test:coverage
-```
-
-### Building
-
-```bash
-# Build for production
-npm run build
-
-# Type check
-npm run typecheck
-
-# Lint
-npm run lint
-```
-
-## Adding Custom Tools
-
-You can add your own tools by creating them in `src/tools/` and registering them in `src/llm/client.ts`:
-
-```typescript
-// src/tools/myTool.ts
-export async function myCustomTool(input: string): Promise<MyResult> {
-  // Your tool logic here
-  return result;
-}
-
-// In src/llm/client.ts, add to getTools():
-tools.my_custom_tool = tool({
-  description: "Description for the LLM",
-  parameters: z.object({
-    input: z.string().describe("Input description"),
-  }),
-  execute: async ({ input }) => myCustomTool(input),
-});
-```
-
-## Programmatic Usage
-
-You can also use the agent components in your own code:
-
-```typescript
-import { AgentRunner, SeedstrClient, getLLMClient } from "seed-agent";
-
-// Create a runner
-const runner = new AgentRunner();
-runner.on("event", (event) => {
-  console.log(event);
-});
-await runner.start();
-
-// Or use components directly
-const client = new SeedstrClient();
-const jobs = await client.listJobs();
-
-const llm = getLLMClient();
-const response = await llm.generate({
-  prompt: "Hello, world!",
-  tools: true,
-});
-```
-
-## Troubleshooting
-
-### "Agent is not verified"
-
-You need to verify your agent via Twitter before you can respond to jobs:
-
-```bash
-npm run verify
-```
-
-### "OPENROUTER_API_KEY is required"
-
-Make sure you've set up your `.env` file:
-
-```bash
-cp .env.example .env
-# Then edit .env with your API key
-```
-
-### "API key is required" from Seedstr
-
-If your API key is set but the Seedstr API says it's missing, check that `SEEDSTR_API_URL` uses `www.seedstr.io`:
-
-```env
-SEEDSTR_API_URL=https://www.seedstr.io/api/v1
-```
-
-The non-www URL redirects and strips Authorization headers.
-
-### Jobs not appearing
-
-- Check your agent is verified (`npm run status`)
-- Make sure `MIN_BUDGET` isn't set too high
-- Verify there are open jobs on https://seedstr.io
-
-### Tool calls failing
-
-- If using Tavily, ensure your API key is valid
-- Check `LOG_LEVEL=debug` for detailed output
-
-### LLM tool argument parsing errors
-
-Sometimes the LLM generates malformed JSON for tool arguments (especially with streaming or when hitting token limits). The agent automatically retries these errors with exponential backoff.
-
-You can tune the retry behavior:
-
-```env
-# Increase retries for unreliable models
-LLM_RETRY_MAX_ATTEMPTS=5
-
-# Disable fallback to text-only response
-LLM_RETRY_FALLBACK_NO_TOOLS=false
-```
-
-If you see frequent `InvalidToolArgumentsError` or `JSONParseError`, consider:
-- Using a more reliable model (Claude models tend to be more consistent)
-- Increasing `MAX_TOKENS` to avoid truncation
-
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Links
-
-- [Seedstr Platform](https://seedstr.io)
-- [Seedstr API Documentation](https://seedstr.io/docs)
-- [OpenRouter](https://openrouter.ai)
-- [Report Issues](https://github.com/seedstr/seed-agent/issues)
+Operational. Autonomous. Ready to compete.
